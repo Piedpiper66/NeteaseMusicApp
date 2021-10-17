@@ -46,7 +46,8 @@ const state = {
    likeVideoList: null,
    // 历史播放记录
    records: JSON.parse(localStorage.getItem('records')) || [],
-   bannerData: false
+   bannerData: false,
+   recommentNeedFresh: true
 };
 
 
@@ -85,8 +86,9 @@ const store = new Vuex.Store({
       },
 
       //更新登录状态
-      updataLoginState(state, flag = false) {
+      updataLoginState(state, flag) {
          state.isLogin = flag;
+         console.log( 'change Login state: ', flag );
       },
 
       // 当前播放音乐的索引
@@ -159,6 +161,9 @@ const store = new Vuex.Store({
       },
       udpateBannerData(state, data) {
          state.bannerData = data;
+      },
+      updateRecomment(state, status) {
+         state.recommentNeedFresh = status;
       }
    },
 })

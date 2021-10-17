@@ -9,14 +9,13 @@
            :class="{row5: rowCount === 5, row6: rowCount === 6}"
            v-for="(item, index) in listCardData"
            :key="index"
-           @click="clickListCardItem(item.id)"
-           >
+           @click="clickListCardItem(item.id)">
          <div class="image">
             <img draggable="false"
                  :src="(item.picUrl || item.coverImgUrl) + '?param=400y400'"
                  alt="" />
             <div class="playCount"
-                 v-if="showPlayCount"><span>{{ Math.floor(item.playCount / 10000) + '万' }}</span></div>
+                 v-if="showPlayCount"><span>{{ Math.floor((item.playCount || item.playcount) / 10000) + '万' }}</span></div>
             <!-- <div class="playShow">
                <i class="iconfont icon-icon_play"></i>
             </div> -->
@@ -94,8 +93,12 @@ export default {
          type: Number,
          default() {
             return 5;
-         }
-      }
+         },
+      },
+      index: {
+         type: Boolean,
+         default: () => false,
+      },
    },
    data() {
       return {
@@ -109,8 +112,14 @@ export default {
       // console.log( this.rowCount );
    },
    mounted() {
-      const single = (100 / this.rowCount) - 2;
-      this.$refs.listCard.style.setProperty('--imageWidth', single + '%');
+      const single = 100 / this.rowCount - 2;
+      this.$refs.listCard.style.setProperty("--imageWidth", single + "%");
+      // this.$nextTick(() => {
+      //    console.log(this.$refs.listCard.firstElementChild);
+      //    this.$refs.listCard.firstElementChild.querySelector(
+      //       ".image>img"
+      //    ).style.filter = "blur(15px)";
+      // });
    },
    methods: {
       clickListCardItem(id) {
@@ -135,6 +144,15 @@ export default {
             }
          }
       },
+      // "$store.state.isLogin"(current) {
+         // if (current && this.index) {
+            // this.$nextTick(() => {
+            //    this.$refs.listCard.querySelector('.listCardItem:first-of-type > .image > img')
+            //    .style.filter = 'blur(15px)';
+            // })
+            // this.$refs.listCard.style.setProperty("--blur", "15px");
+         // }
+      // },
    },
 };
 </script>
@@ -142,6 +160,7 @@ export default {
 <style scoped>
 .listCard {
    --imageWidth: 18.4%;
+   --blur: "0px";
    display: flex;
    flex-wrap: wrap;
    margin: 10px 0;
@@ -154,6 +173,10 @@ export default {
    overflow: hidden;
    cursor: pointer;
 }
+
+/* .listCardItem:first-of-type > .image > img {
+   filter: blur(10px);
+} */
 
 /* .listCardItem:nth-child(6n) {
    margin-right: 0;
@@ -172,6 +195,8 @@ export default {
    padding-bottom: 100%;
    height: 0;
    position: relative;
+   overflow: hidden;
+   border-radius: 6px;
 }
 
 .image::after {

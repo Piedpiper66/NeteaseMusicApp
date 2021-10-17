@@ -1,16 +1,12 @@
 <template>
-   <div ref="card"
+   <div 
+      v-if="musicInfo"
+         ref="card"
         class="musicDetailCard"
         :class="[
          isMusicDetailCardShow ? '' : 'hide',
          backgroundMode ? '' : 'glassCard',
-      ]"
-        :data-bg="`url(${musicInfo.al && musicInfo.al.picUrl})`">
-      <!-- <div class="blur-bg"
-         :style="{
-         background: `url(${musicInfo.al.picUrl}) 0 0/cover`,
-      }"
-      ></div> -->
+         ]">
       <div class="closeCard"
            @click="closeCard">
          <i class="iconfont icon-arrow-down-bold"></i>
@@ -147,6 +143,8 @@ export default {
          isCommentLoading: false,
          // 热门评论
          hotComments: [],
+         // 上次的 stylesheets
+         lastStyleSheet: null
       };
    },
    watch: {
@@ -175,7 +173,10 @@ export default {
       },
       // 当vuex中的歌曲id发生变化时,需要重新获取评论和歌词
       "$store.state.musicId"(musicId) {
-         const sheet = document.styleSheets[0];
+         this.lastStyleSheet = document.styleSheets[0];
+         const sheetLen = this.lastStyleSheet.cssRules.length;
+         console.log('sheet len: ', sheetLen);
+         console.error( 'sheet: ', this.lastStyleSheet );
          // 清空歌词
          this.lyric = [[0, "正在加载歌词"]];
          // 重置评论页数
@@ -184,14 +185,15 @@ export default {
          this.musicInfo =
             this.$store.state.musicList[this.$store.state.currentIndex];
 
-         sheet.removeRule(0);
-         sheet.addRule(
+         sheetLen && this.lastStyleSheet.removeRule(0);
+         this.musicInfo && document.styleSheets[0].addRule(
             ".musicDetailCard::after",
             `
                background: url(${this.musicInfo.al.picUrl}) no-repeat;
             `,
             0
          );
+
          this.comment = {};
          // 优化性能,仅在卡片展示时才发送请求
          if (this.isMusicDetailCardShow) {
@@ -212,7 +214,7 @@ export default {
             return;
          }
          let lyrics = res.data.lrc.lyric;
-         console.log(lyrics);
+         // console.log(lyrics);
          // 对获取到的歌词进行处理
          let arr = lyrics.split("\n");
          let array = [];
@@ -331,7 +333,6 @@ export default {
 }
 
 .musicDetailCard {
-   /* --imgBg: url(); */
    position: absolute;
    width: 100%;
    height: calc(100vh - 75px);
@@ -342,7 +343,6 @@ export default {
    z-index: 999;
    background: transparent;
    background-color: white;
-   /* background-image: linear-gradient(to bottom, #e3e2e3, white); */
    min-width: 1000px;
    overflow: hidden;
 }

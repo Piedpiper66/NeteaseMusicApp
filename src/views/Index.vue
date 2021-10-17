@@ -60,6 +60,7 @@
 import HeaderBar from "components/headerBar/HeaderBar.vue";
 import BottomControl from "components/bottomControl/BottomControl";
 import MusicDetailCard from "views/musicDetailCard/MusicDetailCard.vue";
+import { MusicDetailBasic } from "@/utils/iClass";
 
 export default {
    name: "",
@@ -121,15 +122,34 @@ export default {
          // 对数据进行处理分类
          res = res.data.playlist;
          let index = res.findIndex((item) => item.subscribed == true);
-         this.createdMusicList = res.slice(0, index);
-         this.collectedMusicList = res.slice(index);
+         // 0 - index 喜欢和创建
+
+         res.slice(0, index).forEach(item => {
+            this.createdMusicList.push(new MusicDetailBasic(item));
+         });
          this.createdMusicList[0].name = "我喜欢的音乐";
+         // index - end 收藏
+         res.slice(index).forEach(item => {
+            this.collectedMusicList.push(new MusicDetailBasic(item));
+         })
          // console.log(this.createdMusicList, this.collectedMusicList);
          // 将收藏的歌单上传至vuex
          this.$store.commit("updateCollectMusicList", this.collectedMusicList);
          // 将创建的歌单上传至vuex
          this.$store.commit("updateCreatedMusicList", this.createdMusicList);
       },
+      // generateQueryStr(createdList) {
+      //    let fullStr = '';
+
+      //    const entries = Object.entries(createdList);
+      //    const len = entries.length;
+
+      //    entries.forEach((item, index) => {
+      //       fullStr += (index === len - 1 ? `${item[0]}=${item[1]}&` : `${item[0]}=${item[1]}`);
+      //    })
+
+      //    return ('?' + fullStr);
+      // }
    },
    watch: {
       // 监听收藏歌单的变化

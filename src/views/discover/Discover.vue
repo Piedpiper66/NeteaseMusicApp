@@ -25,7 +25,7 @@ export default {
       };
    },
    created() {
-      console.log( 'discover created' );
+      // console.log( 'discover created' );
    },
    methods: {
       // 接收navbar传来的点击事件

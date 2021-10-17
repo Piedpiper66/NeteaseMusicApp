@@ -76,15 +76,16 @@ const routes = [
             path: '/search/:id', name: 'search', component: Search,
             redirect: '/search/searchsong/:id',
             children: [
-                { path: '/search/searchsong/:id', name: 'searchSong', component: SearchSong },
-                { path: '/search/searchsinger/:id', name: 'searchSinger', component: SearchSinger },
-                { path: '/search/searchalbum/:id', name: 'searchAlbum', component: SearchAlbum },
-                { path: '/search/searchvideo/:id', name: 'searchVideo', component: SearchVideo },
-                { path: '/search/searchmusiclist/:id', name: 'searchMusicList', component: SearchMusicList },
+               { path: '/search/searchsong/:id', name: 'searchSong', component: SearchSong },
+               { path: '/search/searchsinger/:id', name: 'searchSinger', component: SearchSinger },
+               { path: '/search/searchalbum/:id', name: 'searchAlbum', component: SearchAlbum },
+               { path: '/search/searchvideo/:id', name: 'searchVideo', component: SearchVideo },
+               { path: '/search/searchmusiclist/:id', name: 'searchMusicList', component: SearchMusicList },
             ]
-        },
+         },
       ]
-   }
+   },
+   { path: '*', redirect: '/index' }
 ];
 
 const router = new VueRouter({

@@ -139,7 +139,7 @@
 </template>
 
 <script>
-import { formatDate, handleNum, handleMusicTime } from "plugins/utils";
+import { formatDate, handleNum, handleMusicTime } from "@/utils/formateTime";
 import Comment from "components/comment/Comment.vue";
 
 export default {

@@ -74,10 +74,16 @@ Vue.use(Footer)
 
 Vue.prototype.$message = Message;
 
+// import VueQriously from 'vue-qriously'
+// Vue.use(VueQriously);
 
 // 全局请求方法
 import { request } from "./utils/request";
 Vue.prototype.$request = request;
+
+// 设置全局 cookie 方法
+import Cookies from 'js-cookie'
+Vue.prototype.$cookie = Cookies;
 
 new Vue({
    router,

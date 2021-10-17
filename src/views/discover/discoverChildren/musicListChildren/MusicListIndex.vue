@@ -79,12 +79,15 @@ export default {
       async getTheFirstOfHighquality() {
          let result = await this.$request("/top/playlist/highquality", {
             limit: 1,
+            timestamp: Date.now()
          });
          this.theFirstOfHighquality = result.data.playlists[0];
+         // console.log( document.styleSheets );
+         document.styleSheets.length && document.styleSheets[1].removeRule(0);
          document.styleSheets[1].addRule(
                ".highqualityEntry::before",
                `
-                  background: url(${this.theFirstOfHighquality.coverImgUrl});
+                  background: url(${this.theFirstOfHighquality.coverImgUrl}) no-repeat;
                `,
                0
             );

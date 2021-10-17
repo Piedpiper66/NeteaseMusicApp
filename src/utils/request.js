@@ -5,15 +5,15 @@ import vuex from '../store/index'
 export function request(url, params) {
     // 请求超过30秒则判定为超时
     const instance = axios.create({
-        baseURL: '/api',
+        baseURL: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'http://www.raoyunfeng.fun:3000',
         timeout: 30000,
         withCredentials: true,
     });
-
     // axios拦截器
     // 请求拦截
     instance.interceptors.request.use(config => {
         // console.log('请求拦截器');
+      //   console.log( 'request obj: ', config );
         return config
     }, err => {
         console.log(err);
@@ -21,6 +21,7 @@ export function request(url, params) {
 
     // 响应拦截
     instance.interceptors.response.use(config => {
+      //  console.log('reponse obj: ', config);
         return config;
     }, err => {
         console.log([err]);
@@ -33,11 +34,12 @@ export function request(url, params) {
             // 修改当前的登录状态
             vuex.state.isLogin = false;
         } else {
+
             console.log(err.response.data.msg);
         }
     });
 
-    instance.defaults.withCredentials = true;
+   //  instance.defaults.withCredentials = true;
 
     if (params) {
         params = {

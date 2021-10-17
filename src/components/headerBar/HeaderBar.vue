@@ -10,10 +10,10 @@
 
       <div class="center">
          <div class="buttons">
-            <i class="iconfont icon-arrow-left-bold back"
+            <i class="el-icon-arrow-left"
                @click="goBack"
                :class="{active: canGoBack}"></i>
-            <i class="iconfont icon-arrow-right-bold forward"
+            <i class="el-icon-arrow-right"
                :class="{active: canForward}"
                @click="goForward"></i>
          </div>
@@ -132,12 +132,15 @@
       <div class="right">
          <div class="user">
             <div class="avatar">
-               <!-- 登录框 -->
+               <!-- 登录框  登陆前-->
                <el-popover placement="bottom"
                            width="330"
                            trigger="click"
-                           v-if="!userInfo.nickname">
-                  <el-form ref="form"
+                           :tabindex="0"
+                           v-if="!$store.state.isLogin">
+                  <!-- 手机号密码登录 -->
+                  <el-form v-show="isPassLogin"
+                           ref="form"
                            v-model="loginForm"
                            label-width="80px"
                            label-position="right"
@@ -162,22 +165,74 @@
                                    @click="login"
                                    size="mini">登录</el-button>
                      </div>
+                     <!-- <div class="regEnter"
+                          @click="handleQRLogin">二维码登录</div> -->
                      <div class="regEnter"
-                          @click="isRegisteredShow = true">注册</div>
+                          @click="(isCaptchaLogin = true, isQRLogin = false, isPassLogin = false)">验证码登录</div>
                   </el-form>
+
+                  <!-- 二维码登录 -->
+                  <!-- <div v-show="isQRLogin">
+                     <div>
+                        <i class="el-icon-back"></i><span class="back-to-phone"
+                              @click="(isQRLogin = false, isPassLogin = true)">手机号登陆</span>
+                     </div>
+                     <qriously :value="QRLink"
+                               :size="150" />
+                     <span>{{ scanMessage }}</span>
+                  </div> -->
+
+                  <!-- 验证码登录 -->
+                  <div v-show="isCaptchaLogin">
+                     <el-form ref="form"
+                              v-model="loginForm"
+                              label-width="80px"
+                              label-position="right"
+                              size="mini">
+                        <el-form-item label="手机号码："
+                                      size="mini"
+                                      label-width="100px"
+                                      required>
+                           <input type="text"
+                                  v-model="captchaForm.phone"
+                                  @input="handlePhoneNumInput">
+                        </el-form-item>
+                        <el-form-item label="验证码："
+                                      size="mini"
+                                      label-width="100px"
+                                      required>
+                           <input type="text"
+                                  v-model="captchaForm.captcha"
+                                  style="width: 40%; margin-right: 10px" />
+                           <el-button type="danger"
+                                      size="mini"
+                                      style="width: max-content"
+                                      @click="sendCaptcha"
+                                      :disabled="isSendDisable">{{ sendBtnMsg }}</el-button>
+                        </el-form-item>
+                        <div class="loginButton">
+                           <el-button type="danger"
+                                      @click="handleCaptchaLogin"
+                                      size="mini">登录</el-button>
+                        </div>
+                        <!-- <div class="regEnter"
+                             @click="handleQRLogin">二维码登录</div> -->
+                        <div class="regEnter"
+                             @click="(isCaptchaLogin = false, isQRLogin = false, isPassLogin = true)">手机密码登录</div>
+                     </el-form>
+                  </div>
                   <img src="~assets/img/test.jpg"
                        alt=""
-                       slot="reference"
-                       @click="isPopoverShow = !isPopoverShow" />
+                       slot="reference" />
                </el-popover>
 
+               <!-- 登陆后 -->
                <el-popover placement="bottom"
                            width="150"
                            trigger="hover"
-                           v-else
-                           >
-                  <el-button 
-                             size="default"
+                           :tabindex="1"
+                           v-else>
+                  <el-button size="default"
                              @click="logout">退出登录</el-button>
 
                   <img v-if="userInfo && userInfo.avatarUrl"
@@ -190,33 +245,39 @@
             </div>
 
             <div class="userName"
-                 v-if="!userInfo.nickname">点击头像登录</div>
-             <div class="userName"
+                 v-if="!$store.state.isLogin">
+               点击头像登录
+            </div>
+            <div class="userName"
                  v-else>
                {{ userInfo && userInfo.nickname }}
             </div>
          </div>
       </div>
-
-      <registered :isDialogShow="isRegisteredShow"
-                  @closeRegistered="closeRegistered"></registered>
+      <!-- <registered :isDialogShow="isRegisteredShow"
+                  @closeRegistered="closeRegistered"></registered> -->
    </div>
 </template>
 
 <script>
 import { handleMusicTime } from "@/utils/formateTime";
-import Registered from "components/registered/Registered.vue";
+// import Registered from "components/registered/Registered.vue";
 // 节流定时器名称
 let timer;
 
 export default {
-   components: { Registered },
+   // components: { Registered },
    name: "HeaderBar",
+   inject: ["reload"],
    data() {
       return {
          loginForm: {
             password: "",
             phoneNum: "",
+         },
+         captchaForm: {
+            phone: "",
+            captcha: "",
          },
          userInfo: {},
          isPopoverShow: false,
@@ -239,6 +300,15 @@ export default {
          routesCount: 0,
          currRouteIndex: 0,
          historyList: [],
+         isPassLogin: true,
+         isQRLogin: false,
+         QRLink: "",
+         QRcodeTimer: 0,
+         scanMessage: "",
+         isCaptchaLogin: false,
+         isSendDisable: false,
+         sendBtnMsg: "发送验证码",
+         captchaTimer: 0,
       };
    },
    computed: {},
@@ -246,12 +316,22 @@ export default {
       this.getHotSearch();
       // 从localstorage中读取userInfo
       if (window.localStorage.getItem("userId")) {
+         this.$request("/login/refresh").then((res) => {
+            console.log(res);
+         });
+
          // 进入这里表示已经登录，更新登录状态到vuex
          this.$store.commit("updataLoginState", true);
          // 从localStorage中取userinfo
          this.userInfo = JSON.parse(window.localStorage.getItem("userInfo"));
+         console.log("header user info: ", this.userInfo);
       }
-      this.getCurrentUserInfo();
+      this.$request("/user/subcount", {
+         timestamp: Date.now(),
+      }).then(res => {
+         console.log("info: ", res);
+      });
+      // this.getCurrentUserInfo();
    },
    updated() {},
    methods: {
@@ -280,13 +360,16 @@ export default {
             // 将请求到的用户id存入localstorage
             window.localStorage.setItem("userId", result.data.profile.userId);
             this.userInfo = result.data.profile;
-            window.localStorage.setItem("userInfo", JSON.stringify(this.userInfo));
-            this.isPopoverShow = true;
-            this.$message.success("登录成功!");
-            // 刷新页面
-            // this.$router.go(0);
+            window.localStorage.setItem(
+               "userInfo",
+               JSON.stringify(this.userInfo)
+            );
             // 修改vuex中的登录状态
             this.$store.commit("updataLoginState", true);
+            this.$message.success("登录成功!");
+
+            // 刷新页面
+            // this.$router.go(0);
             // this.$store.commit("updateCurrentUserId", result.data.profile.userId);
          } else if (result.data.code == 400) {
             // 手机号错误
@@ -326,14 +409,13 @@ export default {
          res.data.songs[0].dt = handleMusicTime(res.data.songs[0].dt);
          return res.data.songs[0];
       },
-
       // 获取当前用户信息
       async getCurrentUserInfo() {
-         var timestamp = Date.parse(new Date());
+         var timestamp = Date.now();
          let res = await this.$request("/user/account", {
             timestamp,
          });
-         // console.log(res);
+         console.log("getUserInfo result: ", res);
          if (res.data.profile != null) {
             this.userInfo = res.data.profile;
             // 更新登录状态
@@ -358,31 +440,30 @@ export default {
          // console.log("提交表单");
          //   console.log(this.loginForm);
          this.loginByCellphone();
-         this.getCurrentUserInfo();
-         this.isPopoverShow = true;
+         // this.getCurrentUserInfo();
       },
 
       // 点击退出登录的回调
       async logout() {
-        let res = await this.$request("/logout");
-        console.log(res);
+         let res = await this.$request("/logout");
+         console.log(res);
 
-        if (res.data.code != 200) {
-          this.$message("退出登录失败, 请稍后重试!");
-          return;
-        }
+         if (res.data.code != 200) {
+            this.$message("退出登录失败, 请稍后重试!");
+            return;
+         }
 
-        // 清空data和localstorage中的数据，以及cookie
-        this.userInfo = {};
-        window.localStorage.setItem("userInfo", "");
-        window.localStorage.removeItem('userId');
-        this.clearAllCookie();
-        //   在vuex中更新登录状态
-        this.$store.commit("updataLoginState");
-        this.isPopoverShow = false;
-        this.$message.success("退出成功!");
-        // 刷新页面
-      //   this.$router.go(0);
+         // 清空data和localstorage中的数据，以及cookie
+         this.userInfo = {};
+         window.localStorage.setItem("userInfo", "");
+         window.localStorage.removeItem("userId");
+         this.clearAllCookie();
+         //   在vuex中更新登录状态
+         this.$store.commit("updataLoginState", false);
+         this.$store.commit("updateRecomment", true);
+         this.$message.success("退出成功!");
+         // 刷新页面
+         //   this.$router.go(0);
       },
 
       //清除所有cookie函数
@@ -500,6 +581,135 @@ export default {
       handlePw(e) {
          if (["Enter", "NumpadEnter"].includes(e.code)) this.login();
       },
+
+      handlePhoneNumInput(e) {
+         const reg = /[0-9]/;
+         if (!reg.test(e.data)) return false;
+      },
+      sendCaptcha() {
+         let minutes = 60;
+         let interupt = false;
+         this.$request("/captcha/sent", {
+            phone: this.captchaForm.phone,
+         });
+         console.log(this.captchaForm.phone);
+         this.isSendDisable = true;
+         this.captchaTimer = setInterval(() => {
+            if (minutes >= 0) {
+               this.sendBtnMsg = minutes-- + "s后再发送";
+            } else {
+               clearInterval(this.captchaTimer);
+               this.isSendDisable = false;
+               this.sendBtnMsg = "发送验证码";
+            }
+         }, 1000);
+      },
+      async handleCaptchaLogin() {
+         const result = await this.$request("/captcha/verify", {
+            ...this.captchaForm,
+         });
+         console.log("captcha result: ", result);
+         if (result.data.data === true) {
+            const loginRes = await this.$request("/login/cellphone", {
+               ...this.captchaForm,
+            });
+            clearInterval(this.captchaTimer);
+            console.log("captcha login res:", loginRes);
+            const profile = loginRes.data.profile;
+            if (profile != null) {
+               localStorage.setItem("userId", profile.userId);
+               this.userInfo = profile;
+               localStorage.setItem("userInfo", JSON.stringify(this.userInfo));
+               this.$message.success("登录成功!");
+               // 刷新页面
+               // this.$router.go(0);
+               // 修改vuex中的登录状态
+               this.$store.commit("updataLoginState", true);
+            }
+         } else {
+            this.$message.error("验证码错误");
+         }
+      },
+      /**
+       *    1. key
+       *       /login/qr/key
+       *    2. url
+       *       /login/qr/create?key=xxx
+       *    3. check status
+       *       /login/qr/check?key=xxx
+       *       status:
+       *          800 过期 -> 刷新图标显现
+       *          801 等待扫码 -> 无操作
+       *          802 待确认 -> 等待确认提示显现
+       *          803 授权登录成功, 返回 cookies -> 获取 cookies -> 登录(getCurrentUserInfo)
+       *
+       */
+      // async handleQRLogin() {
+      //    this.isQRLogin = true;
+      //    this.isPassLogin = false;
+      //    this.isCaptchaLogin = false;
+      //    const keyRes = await this.$request("/login/qr/key", {
+      //       timestamp: Date.now(),
+      //    });
+      //    if (keyRes.data.code == 200) {
+      //       const key = keyRes.data.data.unikey;
+      //       const urlRes = await this.$request("/login/qr/create", {
+      //          key,
+      //          timestamp: Date.now(),
+      //       });
+      //       if (urlRes.data.code == 200) {
+      //          this.QRLink = urlRes.data.data.qrurl;
+
+      //          this.QRcodeTimer = setInterval(async () => {
+      //             const { data } = await this.$request("/login/qr/check", {
+      //                key,
+      //                timestamp: Date.now(),
+      //             });
+      //             // console.log("status data", data);
+      //             switch (data.code) {
+      //                case 800:
+      //                   break;
+      //                case 801:
+      //                   break;
+      //                case 802:
+      //                   this.scanMessage = data.message;
+      //                   // console.log(data.message);
+      //                   break;
+      //                case 803:
+      //                   this.scanMessage = data.message;
+      //                   this.setUserCookie(data.cookie);
+      //                   // this.getCurrentUserInfo();
+      //                   clearInterval(this.QRcodeTimer);
+      //                   break;
+      //             }
+      //          }, 1000);
+      //       }
+      //    }
+      // },
+      // async refreshQRcode() {},
+      // setUserCookie(cookiesStr) {
+      //    const cookieArr = cookiesStr.split(";");
+      //    const subKeys = ["Max-Age", "Expires", "Path", "HttpOnly"];
+
+      //    cookieArr.forEach((item, index) => {
+      //       const options = {};
+      //       if (index % 5 === 0) {
+      //          subKeys.forEach((subItem, i) => {
+      //             const value = cookieArr[index + i + 1].trimLeft().split("=");
+      //             if (subItem == "HttpOnly") {
+      //                if (value[0]) {
+      //                   options[subItem] = true;
+      //                } else return;
+      //             } else {
+      //                options[subItem] = value[1];
+      //             }
+      //          });
+      //          const entry = item.split("=");
+      //          console.log(options);
+      //          this.$cookie.set(entry[0], entry[1], options);
+      //       }
+      //    });
+      // },
    },
    watch: {
       "$store.state.isLogin"(current) {
@@ -508,12 +718,12 @@ export default {
             this.userInfo = {};
          }
       },
-      "loginForm.password"(val) {
-         console.log(val);
-      },
-      $route(to, from) {
-         const { fullPath, meta } = to;
-         let _index;
+      // "loginForm.password"(val) {
+      //    console.log(val);
+      // },
+      // $route(to, from) {
+      //    const { fullPath, meta } = to;
+      //    let _index;
          // if (fullPath !== from.fullPath && to.meta.host === from.meta.host) {
          //    // 倘若当前路由已经存在, 从历史记录中删除,
          //    if ((_index = this.historyList.indexOf(fullPath) !== -1)){
@@ -522,17 +732,17 @@ export default {
          //    }
          //    this.historyList.push(fullPath);
          // }
-      },
-      currRouteIndex(index) {
-         if (this.historyList.length > 0) {
+      // },
+      // currRouteIndex(index) {
+      //    if (this.historyList.length > 0) {
             // switch (true) {
             //    case index:
             //       break;
             //    default:
             //       break;
             // }
-         }
-      },
+         // }
+      // },
    },
 };
 </script>
@@ -694,10 +904,17 @@ export default {
 }
 
 .regEnter {
-   width: 100%;
+   /* width: 100%; */
    text-align: center;
    margin-top: 10px;
    font-size: 12px;
+   text-decoration: underline;
+   cursor: pointer;
+   /* display: inline-block; */
+   float: right;
+   margin: 10px 10px 5px 10px;
+}
+.back-to-phone:hover {
    text-decoration: underline;
    cursor: pointer;
 }

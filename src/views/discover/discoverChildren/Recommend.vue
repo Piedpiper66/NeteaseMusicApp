@@ -14,7 +14,8 @@
             <list-card :listCardData="musicList"
                        @clickListCardItem="clickListCardItem"
                        :transition="true"
-                       position="right-bottom"></list-card>
+                       position="right-bottom"
+                       :index="true"></list-card>
          </div>
       </div>
    </div>
@@ -36,17 +37,20 @@ export default {
          bannerData: [],
          // recommend页面显示的musicList
          musicList: [],
+         flag: true
       };
    },
    created() {
-      this.getBannerData();
-      this.getMusicList();
+      if (this.flag) {
+         this.getBannerData();
+         this.getMusicList();
+      }
    },
    methods: {
       // 请求轮播图数据
       async getBannerData() {
          let result = await this.$request("/banner");
-         console.log(result);
+         // console.log(result);
          this.bannerData = result.data.banners.filter(
             (banner) => banner.targetType === 1
          );
@@ -54,9 +58,9 @@ export default {
 
       // 请求推荐歌单数据的前十个
       getMusicList() {
-         this.$request("/personalized", { limit: 10 }).then((res) => {
-            // console.log(res);
-            this.musicList = res.data.result;
+         this.$request("/top/playlist", { limit: 15 }).then((res) => {
+            console.log('hot list:', res);
+            this.musicList = res.data.playlists;
          });
       },
       // 点击歌单封面的回调
@@ -65,6 +69,27 @@ export default {
          this.$router.push({ name: "musicListDetail", params: { id } });
       },
    },
+   watch: {
+      "$store.state.isLogin"(current) {
+         if (current) {
+            // 把推荐歌单的第一个歌单插入, 再把每天个人8个推荐歌单插入
+            // this.$request('/recommend/songs').then(res => {
+            //    // const songs = res.data.
+            //    // this.musicList[0].
+            // })
+            this.$store.commit('updateRecomment', false);
+            this.$request('/recommend/resource').then(res => {
+               // console.log('person musiclist:', res.data );
+               this.musicList.splice(0, res.data.recommend.length, ...res.data.recommend);
+            })
+         }
+      },
+      "$store.state.recommentNeedFresh"(status) {
+         if (status === false) {
+            this.flag = false;
+         }
+      }
+   }
 };
 </script>
 

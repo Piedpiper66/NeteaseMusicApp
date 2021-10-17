@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import { handleMusicTime } from "plugins/utils";
+import { handleMusicTime } from "@/utils/formateTime";
 export default {
   name: "SearchSong",
   data() {

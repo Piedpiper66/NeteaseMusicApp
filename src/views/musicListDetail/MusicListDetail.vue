@@ -62,7 +62,8 @@
                         :key="index">
                      {{ item }}
                   </span>
-                  <div style="display: inline-block" v-if="musicListDetail.tags.length == 0">暂无标签</div>
+                  <div style="display: inline-block"
+                       v-if="musicListDetail.tags.length == 0">暂无标签</div>
                </div>
                <!-- 歌曲列表的歌曲数量和播放量 -->
                <div class="wrap-item">
@@ -95,7 +96,7 @@
             <el-tab-pane label="歌曲列表"
                          name="first">
                <!-- 表格 -->
-               <el-table :data="musicListDetail.tracks"
+               <el-table :data="tracks"
                          size="mini"
                          style="width: 100%;"
                          @row-dblclick="clickRow"
@@ -105,7 +106,7 @@
                          lazy
                          :row-key="
               (row) => {
-                return row.id;
+                return row.id + Math.random();
               }
             "
                          v-infinite-scroll="loadMore"
@@ -219,12 +220,15 @@ import { formatDate, handleNum, handleMusicTime } from "@/utils/formateTime";
 import Comment from "components/comment/Comment";
 import GoTop from "components/goTop/GoTop.vue";
 import UserListCard from "components/userListCard/UserListCard.vue";
+import { MusicDetailBasic, Track } from "@/utils/iClass";
 
 export default {
    name: "MusicListDetail",
    data() {
       return {
          musicListDetail: null,
+         tracks: [],
+         trackIds: [],
          comments: {},
          // 当前评论页数
          currentCommentPage: 1,
@@ -259,6 +263,7 @@ export default {
    methods: {
       // 请求
       // 根据传来的 id 查询歌单
+      // 只需要 tracks, trackIds, id,
       async getMusicListDetail() {
          var timestamp = Date.now();
          // console.log(this.$route.params.id);
@@ -266,23 +271,39 @@ export default {
             id: this.$route.params.id,
             timestamp,
          });
-         // console.log(result);
-         this.musicListDetail = result.data.playlist;
-         console.log('detail:', this.musicListDetail);
+         console.log(result);
+         const playList = result.data.playlist;
+         // console.log( 'iClass Basic: ', new MusicDetailBasic(result.data.playlist));
+         this.musicListDetail = new MusicDetailBasic(playList);
+
+         // 初始化 tracks
+         playList.tracks.forEach(item => {
+            // 处理播放时间
+            item.dt = handleMusicTime(item.dt);
+            this.tracks.push(new Track(item));
+         })
+
+         // 初始化 trackIds
+         playList.trackIds.forEach(item => {
+            this.trackIds.push(item.id);
+         })
+         
+         // console.log("detail:", this.musicListDetail);
          // 判断是否还有更多音乐
          if (
-            this.musicListDetail.tracks.length !=
-            this.musicListDetail.trackIds.length
+            this.tracksLen !=
+            this.musicListDetail.trackIdsLen
          ) {
             this.isMore = true;
          }
          // 处理播放时间
-         this.musicListDetail.tracks.forEach((item, index) => {
-            this.musicListDetail.tracks[index].dt = handleMusicTime(item.dt);
-         });
+         // this.tracks.forEach((item, index) => {
+         //    this.tracks[index].dt = handleMusicTime(item.dt);
+         // });
          // 判断用户是否喜欢该音乐
          // 直接两个循环性能损耗太厉害了 没什么思路暂时不做先
          // let likeMusicList = this.$store.state.likeMusicList;
+         console.log('createTime: ', playList.createTime);
       },
       // 获取歌单评论
       async getMusicListComment(type) {
@@ -329,11 +350,11 @@ export default {
          res.data.songs.forEach((item, index) => {
             res.data.songs[index].dt = handleMusicTime(item.dt);
          });
-         this.musicListDetail.tracks.push(...res.data.songs);
+         this.tracks.push(...res.data.songs);
          // 判断是否还有更多音乐
          if (
-            this.musicListDetail.tracks.length <
-            this.musicListDetail.trackIds.length
+            this.tracks.length <
+            this.musicListDetail.trackIdsLen
          ) {
             this.isMore = true;
             this.scrollLoadDisabled = false;
@@ -344,7 +365,7 @@ export default {
 
       // 请求用户歌单
       async getUserMusicList() {
-         let timestamp = Date.parse(new Date());
+         let timestamp = Date.now();
          // 先从localStorage里面读取用户信息  如果登录成功是有存的
          this.userInfo =
             window.localStorage.getItem("userInfo") &&
@@ -355,7 +376,11 @@ export default {
          });
          res = res.data.playlist;
          let index = res.findIndex((item) => item.subscribed == true);
-         this.collectedMusicList = res.slice(index);
+         this.collectedMusicList = [];
+         res.slice(index).forEach(item => {
+            this.collectedMusicList.push(new MusicDetailBasic(item));
+         })
+         // this.collectedMusicList = res.slice(index);
          // 将收藏的歌单上传至vuex
          this.$store.commit("updateCollectMusicList", this.collectedMusicList);
       },
@@ -390,7 +415,7 @@ export default {
          if (this.musicListDetail.id != this.$store.state.musicListId) {
             // 将歌单传到vuex
             this.$store.commit("updateMusicList", {
-               musicList: this.musicListDetail.tracks,
+               musicList: this.tracks,
                musicListId: this.musicListDetail.id,
             });
          }
@@ -401,9 +426,9 @@ export default {
       },
       // 点击播放全部按钮的回调
       playAll() {
-         this.$store.commit("updateMusicId", this.musicListDetail.tracks[0].id);
+         this.$store.commit("updateMusicId", this.tracks[0].id);
          this.$store.commit("updateMusicList", {
-            musicList: this.musicListDetail.tracks,
+            musicList: this.tracks,
             musicListId: this.musicListDetail.id,
          });
       },
@@ -420,7 +445,7 @@ export default {
                .querySelectorAll(".el-table__row");
             // 遍历当前musicList 找到当前播放的index的行进行渲染
             // console.log(tableRows);
-            let index = this.musicListDetail.tracks.findIndex(
+            let index = this.tracks.findIndex(
                (item) => item.id == current
             );
             // console.log(index);
@@ -440,7 +465,7 @@ export default {
             }
             // 清除上一首的样式
             if (last != -1) {
-               let lastIndex = this.musicListDetail.tracks.findIndex(
+               let lastIndex = this.tracks.findIndex(
                   (item) => item.id == last
                );
                if (lastIndex != -1) {
@@ -478,16 +503,16 @@ export default {
          // console.log("加载所有音乐");
          // this.isMore = false;
 
-         let arr = this.musicListDetail.trackIds.slice(
-            this.musicListDetail.tracks.length
-         );
+         let arr = this.trackIds;
+         // console.log(this.trackIds, this.musicListDetail.tracksLen);
+         // console.log( 'loadMore: ', arr );
          if (arr.length > 100) {
             arr = arr.slice(0, 100);
          }
          // console.log(arr.length);
          let ids = "";
-         arr.forEach((item) => {
-            ids += item.id + ",";
+         arr.forEach((id) => {
+            ids += id + ",";
          });
          ids = ids.substr(0, ids.length - 1);
          // console.log(ids);
@@ -724,7 +749,7 @@ export default {
 }
 
 .buttonItem {
-   font-size: .9rem;
+   font-size: 0.9rem;
    padding: 7px 18px;
    border: 1px solid #ddd;
    border-radius: 20px;
@@ -747,7 +772,7 @@ export default {
 }
 
 .detailWrap {
-   padding: 0 .5%;
+   padding: 0 0.5%;
 }
 
 .wrap-item {
@@ -793,7 +818,6 @@ export default {
    text-overflow: ellipsis;
    white-space: nowrap;
 }
-
 
 .musicList {
    /* margin: -15px 15px 0; */

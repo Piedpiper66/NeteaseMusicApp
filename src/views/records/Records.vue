@@ -83,7 +83,7 @@ export default {
    name: "Records",
    data() {
       return {
-         musicList: this.$store.state.records,
+         musicList: this.$store.state.records.filter(item => item.name),
       };
    },
    created() {

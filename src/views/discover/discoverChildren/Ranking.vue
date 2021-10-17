@@ -6,8 +6,9 @@
          <div class="offical">
             <div class="title">官方榜</div>
             <!-- 用自己封装的table组件算了 第三方的改起来问题太多了 -->
-            <list-table :officialListDetailItem="item"
+            <list-table 
                         v-for="(item, index) in officialListDetail"
+                        :officialListDetailItem="item"
                         :key="index"
                         @handleRowClick="handleRowClick"
                         @handleRowDbClick="handleRowDbClick"
@@ -31,9 +32,10 @@
 
 <script>
 import { handleMusicTime } from "@/utils/formateTime";
-
 import ListTable from "components/listTable/ListTable.vue";
 import ListCard from "components/listCard/ListCard.vue";
+import { MusicDetailBasic, Track } from "@/utils/iClass";
+
 export default {
    components: {
       ListTable,

@@ -164,7 +164,7 @@ export default {
       const musicId = this.firstMusicId;
 
       // 刷新之后 id 为 undefined
-      if (localId !== "undefined" && (listId = +localId)) {
+      if (localId && localId !== "undefined" && (listId = +localId)) {
          this.$request("/playlist/detail", {
             id: listId,
             timestamp: Date.now(),
@@ -242,6 +242,7 @@ export default {
          // 获取时间戳
          var timestamp = Date.parse(new Date());
          // 因为喜欢音乐列表实时性较高，为了避免接口缓存，在请求后面加上一个时间戳
+
          let res = await this.$request("/likelist", {
             uid: window.localStorage.getItem("userId"),
             timestamp,
@@ -329,6 +330,7 @@ export default {
             console.log(this.musicList[preIndex].id);
             this.$store.commit("updateMusicId", this.musicList[preIndex].id);
          } else if (type == "next") {
+            if (this.currentMusicIndex + 1 == this.musicList.length) return;
             let currentMusicIndex = this.currentMusicIndex;
             let nextIndex;
             if (this.playType == "order") {
