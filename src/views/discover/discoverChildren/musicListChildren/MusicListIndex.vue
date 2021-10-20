@@ -6,14 +6,24 @@
          <!-- <img :src="theFirstOfHighquality.coverImgUrl"
               alt=""
               class="backgroundImg" /> -->
-         <div class="cover">
+         <div 
+            class="cover"
+            @click="clickListCardItem(theFirstOfHighquality.id)"
+         >
             <img :src="theFirstOfHighquality.coverImgUrl"
                  alt="" />
+            <!-- <play-button
+               :transition="true"
+               position="center"
+               size="normal"
+               :opactity="0.7"
+            ></play-button> -->
          </div>
          <div class="EntryInfo">
             <div class="tag"><i class="iconfont icon-good"></i> 精品歌单</div>
             <div class="name">{{ theFirstOfHighquality.name }}</div>
             <div class="desc">{{ theFirstOfHighquality.copywriter }}</div>
+            
          </div>
       </div>
       <!-- 歌单列表 -->
@@ -55,13 +65,17 @@
 import SecondNavBar from "components/secondNavBar/SecondNavBar.vue";
 import ListCard from "components/listCard/ListCard.vue";
 import SortBox from "components/sortBox/SortBox.vue";
+import { MusicDetailBasic } from "@/utils/iClass";
+import PlayButton from "components/playCircle/playCircle";
+
 export default {
+   name: "musicListIndex",
    components: {
       SecondNavBar,
       ListCard,
       SortBox,
+      PlayButton
    },
-   name: "musicListIndex",
    data() {
       return {
          theFirstOfHighquality: {},
@@ -81,16 +95,17 @@ export default {
             limit: 1,
             timestamp: Date.now()
          });
-         this.theFirstOfHighquality = result.data.playlists[0];
+         this.theFirstOfHighquality = Object.assign(new MusicDetailBasic(result.data.playlists[0]), {creator: null});
+         const sheet = document.styleSheets;
          // console.log( document.styleSheets );
-         document.styleSheets.length && document.styleSheets[1].removeRule(0);
-         document.styleSheets[1].addRule(
-               ".highqualityEntry::before",
-               `
-                  background: url(${this.theFirstOfHighquality.coverImgUrl}) no-repeat;
-               `,
-               0
-            );
+         sheet.length && sheet[1].deleteRule(0);
+         sheet[1].insertRule(
+            `.highqualityEntry::before {
+               background: url(${this.theFirstOfHighquality.coverImgUrl});
+               }
+            `,
+            0
+         );
       },
       // 获取热门歌单tag数据
       async getHotTag() {
@@ -153,6 +168,9 @@ export default {
       await this.getHotTag();
       this.getMusicList();
    },
+   destroyed() {
+      console.log('list index destroy');
+   }
 };
 </script>
 
@@ -187,6 +205,10 @@ export default {
    width: 145px;
    height: 145px;
    margin: 0 15px;
+   position: relative;
+}
+.cover:hover {
+   cursor: pointer;
 }
 
 .cover img {

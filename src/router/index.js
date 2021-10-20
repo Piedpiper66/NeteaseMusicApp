@@ -1,5 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import Store from '../store'
+import { Message } from 'element-ui';
 
 const Index = () => import('views/Index.vue');
 const Discover = () => import('views/discover/Discover.vue');
@@ -94,8 +96,13 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-   to.meta.host = location.host;
-   next();
+  
+   if (to.path.includes('/video') && !Store.state.isLogin) {
+      Message.error('视频页面只有登录后才能访问哦!');
+   } else {
+      to.meta.host = location.host;
+      next();
+   }
 })
 
 export default router;

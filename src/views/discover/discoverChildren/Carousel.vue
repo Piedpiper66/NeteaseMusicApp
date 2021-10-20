@@ -56,6 +56,7 @@ export default {
    props: {
       bannerData: {
          type: Array,
+         require: true,
          default: [],
       },
    },
@@ -84,15 +85,15 @@ export default {
       },
    },
    created() {
-      console.log(this.bannerData);
+      // console.log(this.bannerData);
+      this.classList = this.generateArr(1, this.musicItems.length);
       this.musicItems.forEach((item, index) => {
          this.$set(item, "currClass", this.classList[index]);
       });
-      this.classList = this.generateArr(1, this.musicItems.length);
       this.dotList = this.musicItems.map((item, index) => ({
          isActive: index !== 1 ? false : true,
       }));
-      console.log(this.dotList);
+      // console.log(this.dotList);
    },
    mounted() {
       const _img = this.musicItems,
@@ -110,8 +111,14 @@ export default {
    updated() {
       this.initTimer(this.delay);
    },
-   beforeDestroy() {
-      console.log("destroy");
+   destroyed() {
+      console.log("carousel destroy");
+   },
+   activated() {
+      console.log('carousel activated');
+   },
+   deactivated() {
+      console.log('carousel dectivated');
    },
    methods: {
       handleBoxMouseover() {
@@ -240,10 +247,10 @@ export default {
          }
       },
       async playCurrMusic(id) {
-         const result = await this.$request('/song/detail', {
-            ids: id
-         })
-         this.$store.commit('udpateBannerData', result.data.songs[0] )
+         const result = await this.$request("/song/detail", {
+            ids: id,
+         });
+         this.$store.commit("udpateBannerData", result.data.songs[0]);
       },
    },
 };

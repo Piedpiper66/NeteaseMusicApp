@@ -6,13 +6,13 @@
          <div class="offical">
             <div class="title">官方榜</div>
             <!-- 用自己封装的table组件算了 第三方的改起来问题太多了 -->
-            <list-table 
-                        v-for="(item, index) in officialListDetail"
+            <list-table v-for="(item, index) in officialListDetail"
                         :officialListDetailItem="item"
                         :key="index"
                         @handleRowClick="handleRowClick"
                         @handleRowDbClick="handleRowDbClick"
-                        @clickCheckAll="clickListCardItem"></list-table>
+                        @clickCheckAll="clickListCardItem"
+                        :showSongsNum="true"></list-table>
          </div>
          <div class="global">
             <div class="title">全球榜</div>
@@ -54,22 +54,26 @@ export default {
       // 请求所有榜单
       async getAllRankings() {
          let res = await this.$request("/toplist");
-         console.log(res);
-         this.officialList = res.data.list.slice(0, 4);
-         this.globalList = res.data.list.slice(4);
+         this.officialList = res.data.list
+            .slice(0, 4)
+            .map((item) => ({ id: item.id }));
+         this.globalList = res.data.list
+            .slice(4)
+            .map((item) => new MusicDetailBasic(item));
       },
       // 根据榜单id请求详细数据
       // 根据传来的 id 查询歌单
       async getMusicListDetail(id) {
          // console.log(this.$route.params.id);
          let result = await this.$request("/playlist/detail", { id });
-         // console.log(result);
-         result = result.data.playlist;
+         const playlist = result.data.playlist;
          // 对时间进行处理
-         result.tracks.forEach((item, index) => {
-            result.tracks[index].dt = handleMusicTime(item.dt);
-         });
-         this.officialListDetail.push(result);
+         const tracks = playlist.tracks.slice(0, 5).map(
+            (item) => ((item.dt = handleMusicTime(item.dt)), new Track(item))
+         );
+         this.officialListDetail.push(
+            Object.assign(new MusicDetailBasic(playlist), { tracks, updateTime: playlist.updateTime })
+         );
       },
 
       // 事件函数
@@ -115,11 +119,13 @@ export default {
          this.$router.push({ name: "musicListDetail", params: { id } });
       },
    },
-   async created() {
-      await this.getAllRankings();
-      this.officialList.forEach((item) => {
-         this.getMusicListDetail(item.id);
+   created() {
+      this.getAllRankings().then(() => {
+         this.officialList.forEach((item) => {
+            this.getMusicListDetail(item.id);
+         });
       });
+
       // console.log(this.officialListDetail);
    },
 };

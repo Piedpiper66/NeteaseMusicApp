@@ -53,94 +53,91 @@
          </div>
       </div>
       <!-- 歌曲列表 -->
-      <div class="musicList">
-         <el-tabs value="first">
-            <el-tab-pane label="歌曲列表"
-                         name="first">
-               <!-- 表格 -->
-               <!-- 第三方组件的table在退出后不会销毁，而是继续保留，导致多个table同时存在 ref变得不唯一 
+      <keep-alive>
+         <div class="musicList">
+            <el-tabs value="first">
+               <el-tab-pane label="歌曲列表"
+                            name="first">
+                  <!-- 表格 -->
+                  <!-- 第三方组件的table在退出后不会销毁，而是继续保留，导致多个table同时存在 ref变得不唯一 
               解决办法：避免使用refs..（拼接也不好使） -->
-               <el-table :data="albumInfo.songs"
-                         size="mini"
-                         style="width: 100%"
-                         @row-dblclick="clickRow"
-                         @cell-click="clickCell"
-                         highlight-current-row
-                         stripe>
-                  <el-table-column label=""
-                                   width="30"
-                                   type="index"
-                                   :index="handleIndex">
-                  </el-table-column>
-                  <el-table-column label=""
-                                   width="23">
-                     <!-- 下载按钮 -->
-                     <i class="iconfont icon-download"></i>
-                  </el-table-column>
-                  <el-table-column prop="name"
-                                   label="音乐标题"
-                                   min-width="200">
-                  </el-table-column>
-                  <el-table-column prop="ar[0].name"
-                                   label="歌手"
-                                   min-width="100">
-                  </el-table-column>
-                  <el-table-column prop="al.name"
-                                   label="专辑"
-                                   min-width="140">
-                  </el-table-column>
-                  <el-table-column prop="dt"
-                                   label="时长"
-                                   min-width="100">
-                  </el-table-column>
-               </el-table>
-            </el-tab-pane>
-            <el-tab-pane label="评论"
-                         name="second">
-               <div class="commentList"
-                    v-loading="isCommentLoading">
-                  <!-- 精彩评论 -->
-                  <comment :comments="comments.hotComments"
-                           :commentType="'album'"
-                           :commentId="albumInfo.album.id + ''"
-                           @getComment="getAlbumComment"
-                           v-if="comments.hotComments">
-                     <div slot="title">精彩评论</div>
-                  </comment>
-                  <!-- 最新评论 -->
-                  <comment :comments="comments.comments"
-                           :commentType="'album'"
-                           :commentId="albumInfo.album.id + ''"
-                           :isHotComment="comments.hotComments ? false : true"
-                           @getComment="getAlbumComment">
-                     <div slot="title">热门评论</div>
-                  </comment>
-               </div>
-               <!-- 分页 -->
-               <div class="page"
-                    v-if="comments && comments.comments">
-                  <el-pagination background
-                                 layout="prev, pager, next"
-                                 :total="comments.total"
-                                 small
-                                 :page-size="50"
-                                 :current-page="currentCommentPage"
-                                 @current-change="commentPageChange">
-                  </el-pagination>
-               </div>
-            </el-tab-pane>
-            <el-tab-pane label="专辑详情"
-                         name="third">
-               <div class="albumDesc">{{ albumInfo.album.description }}</div>
-            </el-tab-pane>
-         </el-tabs>
-      </div>
+                  <el-table :data="songs"
+                            size="mini"
+                            style="width: 100%"
+                            @row-dblclick="clickRow"
+                            highlight-current-row
+                            stripe>
+                     <el-table-column label=""
+                                      width="30"
+                                      type="index"
+                                      :index="handleIndex">
+                     </el-table-column>
+                     <el-table-column prop="name"
+                                      label="音乐标题"
+                                      min-width="200">
+                     </el-table-column>
+                     <el-table-column prop="ar[0].name"
+                                      label="歌手"
+                                      min-width="100">
+                     </el-table-column>
+                     <el-table-column prop="al.name"
+                                      label="专辑"
+                                      min-width="140">
+                     </el-table-column>
+                     <el-table-column prop="dt"
+                                      label="时长"
+                                      min-width="100">
+                     </el-table-column>
+                  </el-table>
+               </el-tab-pane>
+               <el-tab-pane label="评论"
+                            name="second">
+                  <div class="commentList"
+                       v-loading="isCommentLoading">
+                     <!-- 精彩评论 -->
+                     <comment :comments="comments.hotComments"
+                              :commentType="'album'"
+                              :commentId="albumInfo.album.id + ''"
+                              @getComment="getAlbumComment"
+                              v-if="comments.hotComments">
+                        <div slot="title">精彩评论</div>
+                     </comment>
+                     <!-- 最新评论 -->
+                     <comment :comments="comments.comments"
+                              :commentType="'album'"
+                              :commentId="albumInfo.album.id + ''"
+                              :isHotComment="comments.hotComments ? false : true"
+                              @getComment="getAlbumComment">
+                        <div slot="title">热门评论</div>
+                     </comment>
+                  </div>
+                  <!-- 分页 -->
+                  <div class="page"
+                       v-if="comments && comments.comments">
+                     <el-pagination background
+                                    layout="prev, pager, next"
+                                    :total="comments.total"
+                                    small
+                                    :page-size="50"
+                                    :current-page="currentCommentPage"
+                                    @current-change="commentPageChange">
+                     </el-pagination>
+                  </div>
+               </el-tab-pane>
+               <el-tab-pane label="专辑详情"
+                            name="third">
+                  <div class="albumDesc">{{ albumInfo.album.description }}</div>
+               </el-tab-pane>
+            </el-tabs>
+         </div>
+      </keep-alive>
    </div>
 </template>
 
 <script>
 import { formatDate, handleNum, handleMusicTime } from "@/utils/formateTime";
 import Comment from "components/comment/Comment.vue";
+import { Track, MusicDetailBasic } from "@/utils/iClass";
 
 export default {
    name: "Album",
@@ -151,6 +148,7 @@ export default {
       return {
          albumInfo: {},
          comments: {},
+         songs: [],
          // 当前评论页数
          currentCommentPage: 1,
          isSub: false,
@@ -167,14 +165,15 @@ export default {
       // 请求
       // 请求专辑详情
       async getAlbumDetail() {
-         let res = await this.$request("album", { id: this.$route.params.id });
-         res = res.data;
+         let { data } = await this.$request("album", { id: this.$route.params.id });
+         console.log('ablum data: ', data);
          // 处理歌曲时间
-         res.songs.forEach((item, index) => {
-            res.songs[index].dt = handleMusicTime(item.dt);
+         data.songs.forEach((item) => {
+            item.dt = handleMusicTime(item.dt);
+            this.songs.push(new Track(item));
          });
-         console.log(res);
-         this.albumInfo = res;
+         // console.log(res);
+         this.albumInfo = data;
       },
       // 获取歌单评论
       async getAlbumComment(type) {
@@ -241,16 +240,16 @@ export default {
          if (this.albumInfo.album.id != this.$store.state.musicListId) {
             // 将歌单传到vuex
             this.$store.commit("updateMusicList", {
-               musicList: this.albumInfo.songs,
+               musicList: this.songs,
                musicListId: this.albumInfo.album.id,
             });
          }
       },
       // 点击全部播放按钮的回调
       playAll() {
-         this.$store.commit("updateMusicId", this.albumInfo.songs[0].id);
+         this.$store.commit("updateMusicId", this.songs[0].id);
          this.$store.commit("updateMusicList", {
-            musicList: this.albumInfo.songs,
+            musicList: this.songs,
             musicListId: this.albumInfo.album.id,
          });
       },
@@ -267,7 +266,7 @@ export default {
                .querySelectorAll(".el-table__row");
             // 遍历当前musicList 找到当前播放的index的行进行渲染
             // console.log(tableRows);
-            let index = this.albumInfo.songs.findIndex(
+            let index = this.songs.findIndex(
                (item) => item.id == current
             );
             // console.log(index);
@@ -287,7 +286,7 @@ export default {
             }
             // 清除上一首的样式
             if (last != -1) {
-               let lastIndex = this.albumInfo.songs.findIndex(
+               let lastIndex = this.songs.findIndex(
                   (item) => item.id == last
                );
                if (lastIndex != -1) {
@@ -322,51 +321,6 @@ export default {
          this.isSub = this.$store.state.subAlbumList.find(
             (item) => item.id == this.$route.params.id
          );
-      },
-
-      // 点击单元格的回调
-      async clickCell(row, column, cell) {
-         // 判断点击的是下载按钮
-         if (cell.querySelector(".icon-download")) {
-            // 请求该歌曲的url
-            console.log(row);
-            let res = await this.$request("/song/url", { id: row.id });
-            console.log(res);
-            if (res.data.data[0].url == null) {
-               this.$message.warning("暂时无法获取该资源哦!");
-               return;
-            }
-
-            // 匹配资源的域名
-            let url = res.data.data[0].url.match(/\http.*?\.net/);
-            // 匹配域名名称，并匹配对应的代理
-            let serve = url[0].match(/http:\/(\S*).music/)[1];
-            if (
-               serve != "/m7" &&
-               serve != "/m701" &&
-               serve != "/m8" &&
-               serve != "/m801"
-            ) {
-               // 没有对应的代理
-               this.$message.error("匹配不到对应的代理,下载失败!");
-               return;
-            }
-            // 截取后面的参数
-            let params = res.data.data[0].url.slice(url[0].length);
-            // console.log(url[0], serve, params);
-
-            let downloadMusicInfo = {
-               url: serve + params,
-               name:
-                  row.name +
-                  " - " +
-                  row.ar[0].name +
-                  "." +
-                  res.data.data[0].type.toLowerCase(),
-            };
-            console.log(downloadMusicInfo);
-            this.$store.commit("updateDownloadMusicInfo", downloadMusicInfo);
-         }
       },
    },
    filters: {
@@ -481,7 +435,7 @@ export default {
 .otherInfo {
    margin-top: 10px;
    /* display: flex; */
-   font-size: .85rem;
+   font-size: 0.85rem;
    /* transform: scale(0.9); */
 }
 

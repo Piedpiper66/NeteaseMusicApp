@@ -66,9 +66,9 @@
 .el-table__row td:nth-child(1) .cell {
    color: #c3c3d3;
 }
-.el-table__row td:nth-child(2) .cell {
+/* .el-table__row td:nth-child(2) .cell {
    color: #b4b4b4;
-}
+} */
 .el-table__row td:nth-child(2) .cell:hover {
    color: #4c4d4d;
 }

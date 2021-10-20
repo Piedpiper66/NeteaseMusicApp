@@ -52,7 +52,9 @@ module.exports = {
          config.plugin('html').tap(args => {
             args[0].cdn = cdn.build
             return args
-         })
+         });
+
+         // config.externals = externals;
       }
       // config
       //    .plugin('webpack-bundle-analyzer')

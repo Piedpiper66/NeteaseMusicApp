@@ -59,7 +59,6 @@ export default {
    --opacity: 0.8;
    --iconSize: 1rem;
    position: absolute;
-
    background-color: rgba(255, 255, 255, var(--opacity));
    opacity: 0;
    border-radius: 50%;

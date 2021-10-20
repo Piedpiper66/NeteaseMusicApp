@@ -2,10 +2,12 @@
    <div class="recommendContainer">
       <!-- 轮播图 -->
       <div class="recommend">
-         <!-- <div class="carousel"> -->
-         <carousel :bannerData="bannerData"
-                   v-if="bannerData.length > 0"></carousel>
-         <!-- </div> -->
+         <keep-alive>
+            <div class="carousel">
+               <carousel :bannerData="bannerData"
+                         v-if="bannerData.length > 0"></carousel>
+            </div>
+         </keep-alive>
 
          <!-- 推荐歌单 -->
          <div class="recommendMusicList">
@@ -24,6 +26,7 @@
 <script>
 import Carousel from "./Carousel.vue";
 import ListCard from "components/listCard/ListCard.vue";
+import { MusicDetailBasic } from "@/utils/iClass";
 
 export default {
    name: "Recommend",
@@ -37,14 +40,15 @@ export default {
          bannerData: [],
          // recommend页面显示的musicList
          musicList: [],
-         flag: true
+         flag: this.$store.state.isLogin,
       };
    },
    created() {
-      if (this.flag) {
-         this.getBannerData();
-         this.getMusicList();
-      }
+      this.getBannerData();
+      this.getMusicList();
+   },
+   destroyed() {
+      console.log("recommend destroy");
    },
    methods: {
       // 请求轮播图数据
@@ -59,13 +63,13 @@ export default {
       // 请求推荐歌单数据的前十个
       getMusicList() {
          this.$request("/top/playlist", { limit: 15 }).then((res) => {
-            console.log('hot list:', res);
-            this.musicList = res.data.playlists;
+            res.data.playlists.forEach((item) =>
+               this.musicList.push(new MusicDetailBasic(item))
+            );
          });
       },
       // 点击歌单封面的回调
       clickListCardItem(id) {
-         // console.log(id);
          this.$router.push({ name: "musicListDetail", params: { id } });
       },
    },
@@ -77,19 +81,23 @@ export default {
             //    // const songs = res.data.
             //    // this.musicList[0].
             // })
-            this.$store.commit('updateRecomment', false);
-            this.$request('/recommend/resource').then(res => {
+            this.$store.commit("updateRecomment", false);
+            this.$request("/recommend/resource").then((res) => {
                // console.log('person musiclist:', res.data );
-               this.musicList.splice(0, res.data.recommend.length, ...res.data.recommend);
-            })
+               this.musicList.splice(
+                  0,
+                  res.data.recommend.length,
+                  ...res.data.recommend
+               );
+            });
          }
       },
       "$store.state.recommentNeedFresh"(status) {
          if (status === false) {
             this.flag = false;
          }
-      }
-   }
+      },
+   },
 };
 </script>
 

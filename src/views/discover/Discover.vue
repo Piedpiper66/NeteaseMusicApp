@@ -2,7 +2,9 @@
    <div class="discoverContainer">
       <nav-bar @clickBarItem="clickBarItem"
                :navBarItem="navBarData"></nav-bar>
-      <router-view class="discover"></router-view>
+      <keep-alive>
+          <router-view class="discover"></router-view>
+      </keep-alive>
    </div>
 </template>
 

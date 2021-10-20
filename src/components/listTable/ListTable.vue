@@ -6,7 +6,6 @@
          <!-- cover -->
          <div class="listCover">
             <img :src="officialListDetailItem.coverImgUrl || cover"
-                 alt=""
                  @click="
             officialListDetailItem.coverImgUrl
               ? clickCheckAll(officialListDetailItem.id)
@@ -14,12 +13,11 @@
           " />
             <div class="update-time"
                  v-show="showUpdate"><span>{{ formateDate }}</span></div>
-            <play-circle
-               v-if="circleShow"
-               class="circle"
-               :position="'center'"
-               size="bigger"
-               :opacity="0.5">
+            <play-circle v-if="circleShow"
+                         class="circle"
+                         :position="'center'"
+                         size="bigger"
+                         :opacity="0.5">
             </play-circle>
          </div>
 
@@ -27,9 +25,8 @@
          <div class="listContainer">
             <slot name="header"></slot>
             <table>
-               <tr 
-                  class="listRows"
-                  v-for="(item, index) in (
+               <tr class="listRows"
+                   v-for="(item, index) in (
                      officialListDetailItem.tracks &&
                      officialListDetailItem.tracks.slice(0, 5)) ||
                      (
@@ -40,23 +37,23 @@
                            officialListDetailItem.topSongs.slice(0, 10))
                         )  ||
                        officialListDetailItem.songs.slice(0, 10)"
-                  :key="index"
-                  @click="handleRowClick"
-                  @dblclick="handleRowDbClick(officialListDetailItem.id || item.id, index)">
+                   :key="index"
+                   @click="handleRowClick"
+                   @dblclick="handleRowDbClick(officialListDetailItem.id || item.id, index)">
                   <td class="index"
                       :class="{topthree: index <= 2}">{{ index + 1 }}</td>
                   <td class="musicName">{{ item.name }}</td>
                   <td class="singer">{{ item.ar[0].name }}</td>
                </tr>
-               <div 
-                  class="checkAll"
-                  @click="clickCheckAll(officialListDetailItem.id)"
-                  v-show="isCheckAllShow">
+               <div class="checkAll"
+                    @click="clickCheckAll(officialListDetailItem.id)"
+                    v-show="isCheckAllShow">
                   查看全部
                   <span v-show="showSongsNum">
                      {{
                         (officialListDetailItem.songs && officialListDetailItem.songs.length) ||
-                        (officialListDetailItem.hotSongs && officialListDetailItem.hotSongs.length)
+                        (officialListDetailItem.hotSongs && officialListDetailItem.hotSongs.length) ||
+                        (officialListDetailItem.tracksLen)
                      }}首
                   </span>
                   <i class="iconfont icon-arrow-right-bold"></i>
@@ -124,7 +121,7 @@ export default {
          default() {
             return true;
          },
-      }
+      },
    },
    computed: {
       formateDate() {

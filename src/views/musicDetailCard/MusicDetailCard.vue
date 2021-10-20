@@ -186,11 +186,10 @@ export default {
             this.$store.state.musicList[this.$store.state.currentIndex];
 
          sheetLen && this.lastStyleSheet.removeRule(0);
-         this.musicInfo && document.styleSheets[0].addRule(
-            ".musicDetailCard::after",
-            `
+         this.musicInfo && document.styleSheets[0].insertRule(
+            `.musicDetailCard::after {
                background: url(${this.musicInfo.al.picUrl}) no-repeat;
-            `,
+            }`,
             0
          );
 

@@ -42,11 +42,6 @@
                                    type="index"
                                    :index="handleIndex">
                   </el-table-column>
-                  <el-table-column label=""
-                                   width="23">
-                     <!-- 下载按钮 -->
-                     <i class="iconfont icon-download"></i>
-                  </el-table-column>
                   <el-table-column prop="name"
                                    label="音乐标题"
                                    min-width="350">

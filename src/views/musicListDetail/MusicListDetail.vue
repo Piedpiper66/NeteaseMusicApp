@@ -100,7 +100,6 @@
                          size="mini"
                          style="width: 100%;"
                          @row-dblclick="clickRow"
-                         @cell-click="clickCell"
                          highlight-current-row
                          stripe
                          lazy
@@ -117,11 +116,6 @@
                                    width="40"
                                    type="index"
                                    :index="handleIndex">
-                  </el-table-column>
-                  <el-table-column label=""
-                                   width="23">
-                     <!-- 下载按钮 -->
-                     <i class="iconfont icon-download"></i>
                   </el-table-column>
                   <el-table-column prop="name"
                                    label="音乐标题"
@@ -141,11 +135,11 @@
                   </el-table-column>
                   <!-- <el-table-column prop="id"></el-table-column> -->
                </el-table>
-               <!-- <div class="loadMore"
-                    v-if="isMore && !this.$store.state.isLogin">
+               <div class="loadMore"
+                    v-if="!this.$store.state.isLogin">
                   登陆后查看更多音乐
                </div>
-               <div class="placeholder"
+               <!-- <div class="placeholder"
                     v-else></div> -->
                <!-- <div class="placeholder"></div> -->
             </el-tab-pane>
@@ -233,7 +227,7 @@ export default {
          // 当前评论页数
          currentCommentPage: 1,
          // 是否还有更多音乐
-         isMore: false,
+         isMore: true,
          // 用户是否收藏了当前歌单
          isSub: false,
          // 是否是用户创建的歌单
@@ -253,6 +247,7 @@ export default {
             // 是否已经加载过列表数据 （用于点击收藏者tab后第一次加载数据）
             isLoaded: false,
          },
+         hasWarn: false
       };
    },
    components: {
@@ -265,50 +260,42 @@ export default {
       // 根据传来的 id 查询歌单
       // 只需要 tracks, trackIds, id,
       async getMusicListDetail() {
-         var timestamp = Date.now();
          // console.log(this.$route.params.id);
          let result = await this.$request("/playlist/detail", {
             id: this.$route.params.id,
-            timestamp,
+            timestamp: Date.now(),
          });
-         console.log(result);
          const playList = result.data.playlist;
-         // console.log( 'iClass Basic: ', new MusicDetailBasic(result.data.playlist));
+
+         // console.log( 'playlist: ', playList );
+         const { tracks, trackIds } = playList;
          this.musicListDetail = new MusicDetailBasic(playList);
 
+
          // 初始化 tracks
-         playList.tracks.forEach(item => {
+         tracks.forEach((item) => {
             // 处理播放时间
             item.dt = handleMusicTime(item.dt);
             this.tracks.push(new Track(item));
-         })
+         });
 
          // 初始化 trackIds
-         playList.trackIds.forEach(item => {
+         trackIds.forEach((item) => {
             this.trackIds.push(item.id);
-         })
-         
-         // console.log("detail:", this.musicListDetail);
+         });
+
+         // const { tracksLen, trackIdsLen } = this.musicListDetail;
+
          // 判断是否还有更多音乐
-         if (
-            this.tracksLen !=
-            this.musicListDetail.trackIdsLen
-         ) {
-            this.isMore = true;
-         }
-         // 处理播放时间
-         // this.tracks.forEach((item, index) => {
-         //    this.tracks[index].dt = handleMusicTime(item.dt);
-         // });
-         // 判断用户是否喜欢该音乐
-         // 直接两个循环性能损耗太厉害了 没什么思路暂时不做先
-         // let likeMusicList = this.$store.state.likeMusicList;
-         console.log('createTime: ', playList.createTime);
+         this.isMore = tracks.length != trackIds.length;
+
+         console.log( "isMore: ", this.isMore );
+
+         console.log( 'tracks len: %d, trackIdsLen: %d', tracks.length, trackIds.length);
       },
       // 获取歌单评论
       async getMusicListComment(type) {
-         // 获取时间戳
-         var timestamp = Date.parse(new Date());
+
          this.isCommentLoading = true;
 
          if (type == "changePage") {
@@ -318,9 +305,9 @@ export default {
             id: this.$route.params.id,
             offset: (this.currentCommentPage - 1) * 50,
             limit: 50,
-            timestamp,
+            timestamp: Date.now(),
          });
-         console.log(res);
+         // console.log(res);
          if (res.data.code !== 200) {
             this.$message.error("获取评论失败,请稍后重试!");
          }
@@ -344,18 +331,17 @@ export default {
          if (this.isMore == false) return;
          this.scrollLoadDisabled = true;
 
-         let res = await this.$request("/song/detail", { ids });
+         let { data } = await this.$request("/song/detail", { ids });
          // 处理时间
-         console.log(res);
-         res.data.songs.forEach((item, index) => {
-            res.data.songs[index].dt = handleMusicTime(item.dt);
+         const songs = data.songs.slice(this.tracks.length - 1);
+         // console.log("song detail", songs);
+
+         songs.forEach((item) => {
+            item.dt = handleMusicTime(item.dt);
+            this.tracks.push(new Track(item));
          });
-         this.tracks.push(...res.data.songs);
          // 判断是否还有更多音乐
-         if (
-            this.tracks.length <
-            this.musicListDetail.trackIdsLen
-         ) {
+         if (this.tracks.length < this.trackIds.length) {
             this.isMore = true;
             this.scrollLoadDisabled = false;
          } else {
@@ -377,9 +363,9 @@ export default {
          res = res.data.playlist;
          let index = res.findIndex((item) => item.subscribed == true);
          this.collectedMusicList = [];
-         res.slice(index).forEach(item => {
+         res.slice(index).forEach((item) => {
             this.collectedMusicList.push(new MusicDetailBasic(item));
-         })
+         });
          // this.collectedMusicList = res.slice(index);
          // 将收藏的歌单上传至vuex
          this.$store.commit("updateCollectMusicList", this.collectedMusicList);
@@ -391,7 +377,7 @@ export default {
             id: this.$route.params.id,
             offset: (this.followedsListData.currentPage - 1) * 20,
          });
-         console.log(res);
+         // console.log(res);
          this.followedsListData.isMore = res.data.more;
          this.followedsListData.followedsList.push(...res.data.subscribers);
       },
@@ -399,16 +385,17 @@ export default {
       // 事件函数
       handleIndex(index) {
          // console.log(index);
-         index += 1;
-         if (index < 10) {
-            return "0" + index;
-         } else {
-            return index;
-         }
+         // index += 1;
+         // if (index < 10) {
+         //    return "0" + index;
+         // } else {
+         //    return index;
+         // }
+         return ++index < 10 ? "0" + index : index;
       },
       // 双击table的row的回调
       async clickRow(row) {
-         console.log(row);
+         // console.log(row);
          // 将musicId提交到vuex中 供bottomControl查询歌曲url和其它操作
          this.$store.commit("updateMusicId", row.id);
          // 如果歌单发生变化,则提交歌单到vuex
@@ -437,7 +424,11 @@ export default {
          this.currentCommentPage = page;
          this.getMusicListComment("changePage");
       },
-
+      /**
+       * 设置歌单列表每行中当前播放行的小喇叭
+       * @current 当前行 id
+       * @last 上一行 id 
+      */
       handleDOM(current, last) {
          if (document.querySelector(".musicListDetail")) {
             let tableRows = document
@@ -445,9 +436,7 @@ export default {
                .querySelectorAll(".el-table__row");
             // 遍历当前musicList 找到当前播放的index的行进行渲染
             // console.log(tableRows);
-            let index = this.tracks.findIndex(
-               (item) => item.id == current
-            );
+            let index = this.tracks.findIndex((item) => item.id == current);
             // console.log(index);
             if (index != -1) {
                // 直接修改dom样式的颜色无效  可能是因为第三方组件的原故
@@ -465,9 +454,7 @@ export default {
             }
             // 清除上一首的样式
             if (last != -1) {
-               let lastIndex = this.tracks.findIndex(
-                  (item) => item.id == last
-               );
+               let lastIndex = this.tracks.findIndex((item) => item.id == last);
                if (lastIndex != -1) {
                   // 将上一个播放的dom的小喇叭换回索引
                   tableRows[lastIndex].children[0].querySelector(
@@ -496,27 +483,18 @@ export default {
       },
       // 点击加载所有音乐的回调
       loadMore() {
-         // if (!this.$store.state.isLogin) {
+         // if (!this.$store.state.isLogin && !this.hasWarn) {
          //    this.$message.error("请先进行登录操作!");
          //    return;
          // }
          // console.log("加载所有音乐");
-         // this.isMore = false;
-
-         let arr = this.trackIds;
-         // console.log(this.trackIds, this.musicListDetail.tracksLen);
-         // console.log( 'loadMore: ', arr );
-         if (arr.length > 100) {
-            arr = arr.slice(0, 100);
+         this.isMore = false;
+         // this.hasWarn = true;
+         let idsArr = this.trackIds;
+         if (idsArr.length > 100) {
+            idsArr = idsArr.slice(0, 100);
          }
-         // console.log(arr.length);
-         let ids = "";
-         arr.forEach((id) => {
-            ids += id + ",";
-         });
-         ids = ids.substr(0, ids.length - 1);
-         // console.log(ids);
-         this.getMusicDetail(ids);
+         this.getMusicDetail(idsArr.join(','));
       },
       // 判断用户是否收藏了该歌单
       getIsSub() {
@@ -533,7 +511,7 @@ export default {
       // 点击收藏按钮的回调
       async collectList() {
          if (!this.$store.state.isLogin) {
-            // this.$message.error("请先进行登录操作!");
+            this.$message.error("请先进行登录操作!");
             return;
          }
          this.isSub = !this.isSub;
@@ -548,64 +526,13 @@ export default {
          this.getUserMusicList();
       },
 
-      async clickCell(row, column, cell) {
-         // 判断点击的是下载按钮
-         if (cell.querySelector(".icon-download")) {
-            // 请求该歌曲的url
-            console.log(row);
-            let res = await this.$request("/song/url", { id: row.id });
-            console.log(res.data.data[0].url);
-            console.log(res);
-            if (res.data.data[0].url == null) {
-               this.$message.warning("暂时无法获取该资源哦!");
-               return;
-            }
-
-            // 匹配资源的域名
-            let url = res.data.data[0].url.match(/\http.*?\.net/);
-            // 匹配域名名称，并匹配对应的代理
-            let serve = url[0].match(/http:\/(\S*).music/)[1];
-            if (
-               serve != "/m7" &&
-               serve != "/m701" &&
-               serve != "/m8" &&
-               serve != "/m801"
-            ) {
-               // 没有对应的代理
-               this.$message.error("匹配不到对应的代理,下载失败!");
-               return;
-            }
-            // 截取后面的参数
-            let params = res.data.data[0].url.slice(url[0].length);
-            // console.log(url[0], serve, params);
-
-            let downloadMusicInfo = {
-               url: serve + params,
-               name:
-                  row.name +
-                  " - " +
-                  row.ar[0].name +
-                  "." +
-                  res.data.data[0].type.toLowerCase(),
-            };
-            console.log(downloadMusicInfo);
-            this.$store.commit("updateDownloadMusicInfo", downloadMusicInfo);
-         }
-      },
-
       // 收藏者列表触底的回调
       bottomLoad() {
          this.followedsListData.currentPage += 1;
          this.getMusicListFolloweds();
       },
    },
-   computed: {},
    watch: {
-      // "$store.state.currentIndex"(currentIndex, lastIndex) {
-      //   // 目前没什么好思路 直接操作原生DOM
-      //   console.log(currentIndex, lastIndex);
-      //   // this.handleTableDOM(currentIndex, lastIndex);
-      // },
       "$store.state.musicId"(current, last) {
          this.handleDOM(current, last);
       },
@@ -628,7 +555,9 @@ export default {
       },
       handleNum,
    },
-   created() {},
+   created() {
+      this.getMusicListDetail();
+   },
    async mounted() {
       if (this.$store.state.isLogin) {
          // 先判断是否是用户创建的歌单
@@ -638,7 +567,6 @@ export default {
             this.getIsSub();
          }
       }
-      await this.getMusicListDetail();
       // 判断是否和上一次打开的歌单相同
       if (this.$route.params.id == this.$store.state.musicListId) {
          this.handleDOM(this.$store.state.musicId);
@@ -819,11 +747,6 @@ export default {
    white-space: nowrap;
 }
 
-.musicList {
-   /* margin: -15px 15px 0; */
-   margin: 15px;
-}
-
 .page {
    width: 100%;
    text-align: center;
@@ -842,7 +765,7 @@ export default {
    color: #aaa;
    text-align: center;
    line-height: 50px;
-   transform: scale(0.9);
+   /* transform: scale(0.9); */
 }
 
 .red {
