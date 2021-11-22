@@ -145,6 +145,13 @@ export default {
          floorCommentInputLength: 0,
          // 用于暂存楼层评论id
          floorCommentId: "",
+         typeMap: Object.freeze({
+            music: 0,
+            mv: 1,
+            musicList: 2,
+            ablum: 3,
+            video: 5
+         })
       };
    },
    methods: {
@@ -163,24 +170,8 @@ export default {
          }
 
          // 判断评论的类型
-         let type;
-         switch (this.commentType) {
-            case "album":
-               type = 3;
-               break;
-            case "musicList":
-               type = 2;
-               break;
-            case "music":
-               type = 0;
-               break;
-            case "mv":
-               type = 1;
-               break;
-            case "video":
-               type = 5;
-               break;
-         }
+         let type = this.typeMap[this.commentType];
+         
          let res = await this.$request("/comment", {
             t: 1,
             id: this.commentId,

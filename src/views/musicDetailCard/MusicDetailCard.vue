@@ -309,7 +309,6 @@ export default {
          this.$store.commit("changeMusicDetailCardState", false);
       },
    },
-   created() {},
 };
 </script>
 

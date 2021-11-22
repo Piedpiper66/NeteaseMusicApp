@@ -1,10 +1,14 @@
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CompressionWebpackPlugin = require('compression-webpack-plugin');
-const { HashedModuleIdsPlugin } = require('webpack')
+const { HashedModuleIdsPlugin } = require('webpack');
+const PrerenderSPAPlugin = require('prerender-spa-plugin');
+// 类似于 SSR 提前渲染单个页面
+// const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
+
 const path = require('path');
 
-function resolve(_path) {
-   return path.resolve(__dirname, _path);
+function resolve() {
+   return path.resolve.apply(null, [...arguments]);
 }
 
 // cdn预加载使用
@@ -75,7 +79,7 @@ module.exports = {
             threshold: 10240,
             minRatio: 0.8
          }),
-         new HashedModuleIdsPlugin()
+         new HashedModuleIdsPlugin(),
       ],
       optimization: {
          minimizer: [
@@ -107,11 +111,6 @@ module.exports = {
                   test: /[\\/]node_modules[\\/]/,
                   priority: -10,
                   chunks: 'initial'
-               },
-               elementUI: {
-                  name: 'chunk-elementUI', // split elementUI into a single package
-                  priority: -5, // the weight needs to be larger than libs and app or it will be packaged into libs or app
-                  test: /[\\/]node_modules[\\/]_?element-ui(.*)/ // in order to adapt to cnpm
                },
                commons: {
                   name: 'chunk-commons',

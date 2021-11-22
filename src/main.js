@@ -82,11 +82,14 @@ import { request } from "./utils/request";
 Vue.prototype.$request = request;
 
 // 设置全局 cookie 方法
-import Cookies from 'js-cookie'
-Vue.prototype.$cookie = Cookies;
+// import Cookies from 'js-cookie'
+// Vue.prototype.$cookie = Cookies;
 
 new Vue({
    router,
    store,
-   render: h => h(App)
+   render: h => h(App),
+   // mounted() {
+   //    document.dispatchEvent(new Event('render-evt'));
+   // }
 }).$mount('#app');

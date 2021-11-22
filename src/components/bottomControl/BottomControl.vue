@@ -209,15 +209,16 @@ export default {
          // console.log(result);
          // 获取不到url
          // console.log( this.musicDetail, this.musicList );
+         const data = ressult.data.data[0];
          const detail = this.musicDetail;
          //  name ar[0].name al.name dt
-         if (result.data.data[0].url == null) {
+         if (data.url == null) {
             this.$message.error("该歌曲暂无版权，将为您播放下一首歌曲");
             this.changeMusic("next");
             return;
          }
-         this.musicUrl = result.data.data[0].url;
-         musicType = result.data.data[0].type.toLowerCase();
+         this.musicUrl = data.url;
+         musicType = data[0].type.toLowerCase();
          this.$store.commit("updateMusicLoadState", false);
          this.$store.commit("insertRecords", {
             name: detail.name,
@@ -239,13 +240,10 @@ export default {
       },
       // 获取喜欢音乐列表
       async getLikeMusicList() {
-         // 获取时间戳
-         var timestamp = Date.parse(new Date());
          // 因为喜欢音乐列表实时性较高，为了避免接口缓存，在请求后面加上一个时间戳
-
          let res = await this.$request("/likelist", {
             uid: window.localStorage.getItem("userId"),
-            timestamp,
+            timestamp: new Date().getTime(),
          });
          this.likeMuiscList = res.data.ids;
          // 将喜欢列表提交到vuex 供歌单中显示喜欢使用 （因为性能问题暂时没做）
@@ -273,20 +271,6 @@ export default {
       },
       // 根据id找到 musicList中对应的musicDetail
       getMusicDetailFromMusicList() {
-         // console.log(this.musicList);
-         // this.musicList.forEach((item, index) => {
-         //   // console.log(index);
-         //   if (item.id == this.$store.state.musicId) {
-         //     // 记录当前音乐的index
-         //     this.currentMusicIndex = index;
-         //     // 将索引传至vuex
-         //     this.$store.commit("updateCurrentIndex", index);
-         //     this.musicDetail = item;
-         //     // 直接从audio标签中的duration属性拿时长会有请求时差问题，所以直接在musicInfo中拿
-         //     this.duration = this.musicList[index].dt;
-         //   }
-         // });
-
          let index = this.musicList.findIndex(
             (item) => item.id == this.$store.state.musicId
          );

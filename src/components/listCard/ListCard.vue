@@ -15,7 +15,7 @@
                  :src="(item.picUrl || item.coverImgUrl) + '?param=400y400'"
                  alt="" />
             <div class="playCount"
-                 v-if="showPlayCount"><span>{{ Math.floor((item.playCount || item.playcount) / 10000) + '万' }}</span></div>
+                 v-if="showPlayCount"><span>{{ (item.playCount || item.playcount) && (Math.floor((item.playCount || item.playcount) / 10000) + '万') }}</span></div>
             <!-- <div class="playShow">
                <i class="iconfont icon-icon_play"></i>
             </div> -->
