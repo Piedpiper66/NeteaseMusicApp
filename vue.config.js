@@ -2,7 +2,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CompressionWebpackPlugin = require('compression-webpack-plugin');
 const { HashedModuleIdsPlugin } = require('webpack');
 const PrerenderSPAPlugin = require('prerender-spa-plugin');
-// 类似于 SSR 提前渲染单个页面
+// 类似于 SSR 提前渲染单个页面 
 // const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
 
 const path = require('path');
