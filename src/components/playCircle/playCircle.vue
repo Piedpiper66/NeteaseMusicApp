@@ -2,15 +2,9 @@
    <div ref="playCircle"
         class="play-circle"
         :class="{
-         'transition': transition === true, 
-         'center': position.trim() === 'center',
-         'right-bottom': position.trim() === 'right-bottom',
-         'left-bottom': position.trim() === 'left-bottom',
-         'left-top': position.trim() === 'left-top',
-         'right-top': position.trim() === 'right-top',
-         'normal': size.trim() === 'normal',
-         'bigger': size.trim() === 'bigger'
-      }">
+            'transition': transition === true, 
+         }"
+   >
       <i class="iconfont icon-icon_play"></i>
    </div>
 </template>
@@ -43,9 +37,14 @@ export default {
       };
    },
    mounted() {
-      const circleStyle = this.$refs.playCircle.style;
-      circleStyle.setProperty("--opacity", this.opacity);
-      circleStyle.setProperty(
+      const circle = this.$refs.playCircle;
+
+      const { position, size } = this;
+      circle.classList.add(position);
+      circle.classList.add(size);
+
+      circle.style.setProperty("--opacity", this.opacity);
+      circle.style.setProperty(
          "--iconSize",
          this.size === "bigger" ? this.biggerIconSize : this.normalIconSize
       );
